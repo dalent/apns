@@ -117,6 +117,13 @@ func (client *Client) ConnectAndWrite(resp *PushNotificationResponse, payload []
 	}
 	defer conn.Close()
 
+	//set timeout，some conn keep estab and timer off,but never release it in ubuntu 14.04
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(30 * time.Second)
+		tcpConn.SetDeadline(time.Now().Add(30 * time.Second))
+	}
+
 	tlsConn := tls.Client(conn, conf)
 	err = tlsConn.Handshake()
 	if err != nil {
